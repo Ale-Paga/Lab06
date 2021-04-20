@@ -6,7 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.Map;
+import java.util.TreeMap;
 import it.polito.tdp.meteo.model.Rilevamento;
 
 public class MeteoDAO {
@@ -25,7 +26,7 @@ public class MeteoDAO {
 
 			while (rs.next()) {
 
-				Rilevamento r = new Rilevamento(rs.getString("Localita"), rs.getDate("Data"), rs.getInt("Umidita"));
+				Rilevamento r = new Rilevamento(rs.getString("Localita"), rs.getDate("Data").toLocalDate(), rs.getInt("Umidita"));
 				rilevamenti.add(r);
 			}
 
@@ -42,6 +43,34 @@ public class MeteoDAO {
 	public List<Rilevamento> getAllRilevamentiLocalitaMese(int mese, String localita) {
 
 		return null;
+	}
+	
+	public Map<String,Double> getUmiditaMediaPerMese(int mese){
+		final String sql =	"SELECT Localita, AVG(Umidita) AS media "
+							+ "FROM situazione "
+							+ "WHERE MONTH(DATA)=? "
+							+ "GROUP BY Localita "; 
+		Map<String,Double> medie = new TreeMap<String,Double>();
+		try {
+			Connection conn = ConnectDB.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			
+			st.setInt(1, mese);
+			ResultSet rs = st.executeQuery();
+			
+			while(rs.next()) {
+				medie.put(rs.getString("Localita"), rs.getDouble("media"));
+			}
+			
+			rs.close();
+			st.close();
+			conn.close();
+			
+		}catch(SQLException e) {
+			e.printStackTrace();
+			throw new RuntimeException("Errore Db", e);
+		}
+		return medie;
 	}
 
 
