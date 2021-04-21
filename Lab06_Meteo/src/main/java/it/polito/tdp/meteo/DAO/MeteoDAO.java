@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
+import it.polito.tdp.meteo.model.Citta;
 import it.polito.tdp.meteo.model.Rilevamento;
 
 public class MeteoDAO {
@@ -42,7 +44,34 @@ public class MeteoDAO {
 
 	public List<Rilevamento> getAllRilevamentiLocalitaMese(int mese, String localita) {
 
-		return null;
+		final String sql = "SELECT Localita, Data, Umidita FROM situazione " +
+				   "WHERE localita=? AND MONTH(data)=?  ORDER BY data ASC";
+		
+		List<Rilevamento> rilevamenti = new ArrayList<Rilevamento>();
+
+			try {
+				Connection conn = ConnectDB.getConnection();
+				PreparedStatement st = conn.prepareStatement(sql);
+				
+				st.setString(1, localita);
+				st.setString(2, Integer.toString(mese)); 
+			
+				ResultSet rs = st.executeQuery();
+				
+				while (rs.next()) {
+
+					Rilevamento r = new Rilevamento(rs.getString("Localita"), rs.getDate("Data").toLocalDate(), rs.getInt("Umidita"));
+					rilevamenti.add(r);
+				}
+				
+			
+				conn.close();
+				return rilevamenti;
+				
+			} catch (SQLException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e);
+			}
 	}
 	
 	public Map<String,Double> getUmiditaMediaPerMese(int mese){
@@ -65,12 +94,39 @@ public class MeteoDAO {
 			rs.close();
 			st.close();
 			conn.close();
+			return medie;
 			
 		}catch(SQLException e) {
 			e.printStackTrace();
 			throw new RuntimeException("Errore Db", e);
 		}
-		return medie;
+		
+	}
+	
+	public List<Citta> getAllCitta(){
+		String sql=" SELECT DISTINCT Localita "+
+					" FROM situazione ";
+		List<Citta> citta = new ArrayList<Citta>();
+		try {
+			Connection conn = ConnectDB.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			
+			ResultSet rs = st.executeQuery();
+
+			while (rs.next()) {
+				Citta cittaTemp=new Citta(rs.getString("Localita"));
+				citta.add(cittaTemp);
+			}
+
+			conn.close();
+			return citta;
+
+		} catch (SQLException e) {
+
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		}
+
 	}
 
 
